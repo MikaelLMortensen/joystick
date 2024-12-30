@@ -1,5 +1,16 @@
-serial.setBaudRate(BaudRate.BaudRate115200)
-serial.redirectToUSB()
+radio.setGroup(20)
+
+
+function sendSpeedLeft(speed: number) {
+    radio.sendValue("left", speed)
+}
+
+function sendSpeedRight(speed: number) {
+    radio.sendValue("right", speed)
+}
+
+//serial.setBaudRate(BaudRate.BaudRate115200)
+//serial.redirectToUSB()
 
 let xOld = -1
 let yOld = -1
@@ -10,9 +21,9 @@ basic.forever(function on_forever() {
     if (x <=5 || x >= -5) {
         x = 0
     }
-
-    basic.showString("X:")
-    basic.showNumber(x)
+    sendSpeedLeft(x)
+//    basic.showString("X:")
+//    basic.showNumber(x)
     let xVal = pins.analogReadPin(AnalogPin.P0) - 111
     if (xVal < 0) {
         xVal = 0
@@ -27,8 +38,9 @@ basic.forever(function on_forever() {
     if (y <= 5 || y >= -5) {
         y = 0
     }
-    basic.showString("Y:")
-    basic.showNumber(y)
+    sendSpeedRight(y)
+    //basic.showString("Y:")
+    //basic.showNumber(y)
     let yVal = pins.analogReadPin(AnalogReadWritePin.P1) - 172
     if (yVal < 0) {
         yVal = 0
@@ -43,7 +55,7 @@ basic.forever(function on_forever() {
     if (xOld != xVal || yOld != yVal) {
         if (xDisplayOld >= 0 || yDisplayOld >= 0) {
             led.toggle(xDisplayOld, yDisplayOld)
-            serial.writeLine(xVal.toString() + ";" + yVal.toString())
+            //serial.writeLine(xVal.toString() + ";" + yVal.toString())
         }
         
         led.toggle(xDisplay, yDisplay)
