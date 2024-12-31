@@ -1,12 +1,42 @@
 radio.setGroup(20)
 
+let direction = "fw";
+radio.sendValue("fw", 1)
+radio.sendValue("sp", 10)
 
-function sendSpeedLeft(speed: number) {
-    radio.sendValue("left", speed)
+input.onButtonPressed(Button.A, function() {
+    let direction = "fw";
+    radio.sendValue("fw", 1)
+    radio.sendValue("sp", 10)
+    radio.sendValue("hd", 0)
+
+    basic.pause(1000)
+})
+
+input.onButtonPressed(Button.B, function () {
+    let direction = "fw";
+    radio.sendValue("fw", 1)
+    radio.sendValue("sp", 0)
+    radio.sendValue("hd", 0)
+})
+
+function sendSpeed(speed: number) {
+
+    if (speed > 0 && direction != "fw") {
+        radio.sendValue("fw", 1)
+        direction = "fw"
+    } else if (direction == "fw") {
+        radio.sendValue("fw", 0)
+        direction = "bw"
+        speed = speed  * -1
+    }
+    radio.sendValue("sp", speed)
+    basic.pause(100)
 }
 
-function sendSpeedRight(speed: number) {
-    radio.sendValue("right", speed)
+function sendHeading(heading: number) {
+    radio.sendValue("hd", heading)
+    basic.pause(100)
 }
 
 //serial.setBaudRate(BaudRate.BaudRate115200)
@@ -18,12 +48,12 @@ let xDisplayOld = -1
 let yDisplayOld = -1
 basic.forever(function on_forever() {
     let x = Math.floor((pins.analogReadPin(AnalogPin.P0) - 498) / 4)
-    if (x <=5 || x >= -5) {
-        x = 0
-    }
-    sendSpeedLeft(x)
-//    basic.showString("X:")
-//    basic.showNumber(x)
+    // if (x <=5 || x >= -5) {
+    //     x = 0
+    // }
+    sendHeading(x)
+    // basic.showString("X:")
+    // basic.showNumber(x)
     let xVal = pins.analogReadPin(AnalogPin.P0) - 111
     if (xVal < 0) {
         xVal = 0
@@ -35,12 +65,12 @@ basic.forever(function on_forever() {
     if (xDisplay > 4)
         xDisplay = 4
     let y = Math.floor((pins.analogReadPin(AnalogReadWritePin.P1) - 543) / 4)
-    if (y <= 5 || y >= -5) {
-        y = 0
-    }
-    sendSpeedRight(y)
-    //basic.showString("Y:")
-    //basic.showNumber(y)
+    // if (y <= 5 || y >= -5) {
+    //     y = 0
+    // }
+    sendSpeed(y)
+    // basic.showString("Y:")
+    // basic.showNumber(y)
     let yVal = pins.analogReadPin(AnalogReadWritePin.P1) - 172
     if (yVal < 0) {
         yVal = 0
