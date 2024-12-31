@@ -1,97 +1,92 @@
+let directionForward = true // Direction Flag, true = forward / false = reverse
+let heading = 0             // heading value, range: -100 - 100. 
+// Negative values mean turn left
+// Positive values mean turn right
+let speed = 0               // Speed value, range 0 - 100
+
 radio.setGroup(20)
+basic.showArrow(ArrowNames.North)
 
-let direction = "fw";
-radio.sendValue("fw", 1)
-radio.sendValue("sp", 10)
+input.onButtonPressed(Button.AB, function () {
+})
 
-input.onButtonPressed(Button.A, function() {
-    let direction = "fw";
-    radio.sendValue("fw", 1)
-    radio.sendValue("sp", 10)
-    radio.sendValue("hd", 0)
 
-    basic.pause(1000)
+function changeDirection() {
+    directionForward = !directionForward
+    sendSpeed()
+    if (directionForward) {
+        radio.sendValue("fw", 1)
+        basic.showArrow(ArrowNames.North)
+    } else {
+        radio.sendValue("fw", 0)
+        basic.showArrow(ArrowNames.South)
+    }
+}
+
+input.onButtonPressed(Button.A, function () {
+    changeDirection()
 })
 
 input.onButtonPressed(Button.B, function () {
-    let direction = "fw";
-    radio.sendValue("fw", 1)
-    radio.sendValue("sp", 0)
-    radio.sendValue("hd", 0)
+    radio.sendValue("info", 1)
 })
 
-function sendSpeed(speed: number) {
-
-    if (speed > 0 && direction != "fw") {
-        radio.sendValue("fw", 1)
-        direction = "fw"
-    } else if (direction == "fw") {
-        radio.sendValue("fw", 0)
-        direction = "bw"
-        speed = speed  * -1
-    }
+function sendSpeed() {
     radio.sendValue("sp", speed)
-    basic.pause(100)
 }
 
-function sendHeading(heading: number) {
+function sendHeading() {
+    // Lige ud = 0
+    // Venstre = -100
+    // Højre = 100
     radio.sendValue("hd", heading)
-    basic.pause(100)
 }
 
-//serial.setBaudRate(BaudRate.BaudRate115200)
-//serial.redirectToUSB()
+let voltageSpeed = 0      // Analog input value,    range: 0-1023
+let voltageHeading = 0    // Analog direction value,  range: 0-1023
 
-let xOld = -1
-let yOld = -1
-let xDisplayOld = -1
-let yDisplayOld = -1
-basic.forever(function on_forever() {
-    let x = Math.floor((pins.analogReadPin(AnalogPin.P0) - 498) / 4)
-    // if (x <=5 || x >= -5) {
-    //     x = 0
-    // }
-    sendHeading(x)
-    // basic.showString("X:")
-    // basic.showNumber(x)
-    let xVal = pins.analogReadPin(AnalogPin.P0) - 111
-    if (xVal < 0) {
-        xVal = 0
-    }
+basic.forever(function () {
+    let oldVoltageSpeed = 0
+    let oldVoltageHeading = 0
+    let oldSpeed = 0
+    let oldHeading = 0
 
-    let xDisplay = 4 - Math.round(xVal / 170)
-    if(xDisplay < 0)
-        xDisplay = 0
-    if (xDisplay > 4)
-        xDisplay = 4
-    let y = Math.floor((pins.analogReadPin(AnalogReadWritePin.P1) - 543) / 4)
-    // if (y <= 5 || y >= -5) {
-    //     y = 0
-    // }
-    sendSpeed(y)
-    // basic.showString("Y:")
-    // basic.showNumber(y)
-    let yVal = pins.analogReadPin(AnalogReadWritePin.P1) - 172
-    if (yVal < 0) {
-        yVal = 0
-    }
+    voltageSpeed = (pins.analogReadPin(AnalogPin.P0) - 492) * 3
+    // basic.showString("S:")
+    // basic.showNumber(voltageSpeed)
+    // basic.showString(" ")
 
-    let yDisplay = Math.round(yVal / 170)
-    if (yDisplay < 0)
-        yDisplay = 0
-    if (yDisplay > 4)
-        yDisplay = 4
-
-    if (xOld != xVal || yOld != yVal) {
-        if (xDisplayOld >= 0 || yDisplayOld >= 0) {
-            led.toggle(xDisplayOld, yDisplayOld)
-            //serial.writeLine(xVal.toString() + ";" + yVal.toString())
+    // Has speed input changed since last run
+    if (voltageSpeed != oldVoltageSpeed) {
+        oldVoltageSpeed = voltageSpeed
+        speed = 0
+        // calculate speed (0 - 100)
+        if (voltageSpeed > 5) {
+            // convert voltage to percent 1023 => 100
+            speed = Math.floor(voltageSpeed / 10.2)
         }
-        
-        led.toggle(xDisplay, yDisplay)
-        xOld = xVal
-        yOld = yVal
-        xDisplayOld = xDisplay
-        yDisplayOld = yDisplay
+        // if speed has changed we send it
+        if (speed != oldSpeed) {
+            oldSpeed = speed
+
+            if (speed > 0 && !directionForward) {
+                changeDirection()
+            }
+
+            if (speed < 0 && directionForward) {
+                changeDirection()
+                speed = speed * -1
+            }
+
+            sendSpeed()
+        }
     }
+    voltageHeading = pins.analogReadPin(AnalogPin.P1)
+    // Has heading input changed since last run
+    if (voltageHeading != oldVoltageHeading) {
+        oldVoltageHeading = voltageHeading
+        heading = Math.floor(voltageHeading / (5.1)) - 100 // Range: -100 => 100
+        sendHeading()
+    }
+    basic.pause(100)
 })
